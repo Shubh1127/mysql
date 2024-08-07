@@ -1,10 +1,14 @@
 const { faker } = require('@faker-js/faker');
 const mysql=require('mysql2');
-const path=require("path")
-
+const path=require("path");
 const express=require("express");
 const app=express();
 let port=8080;
+const methodOverride=require("method-override");
+
+app.use(methodOverride("_method"));
+app.use(express.urlencoded({extended:true}));
+
 
 
 app.set("view engine","ejs");
@@ -62,6 +66,33 @@ app.get("/user/:id/edit",(req,res)=>{
     }
 })
 
+//UPDATE ROUTE
+app.patch("/user/:id",(req,res)=>{
+        let {id}=req.params;
+        let {password:formpass,username:newUsername}=req.body;
+        let q=`SELECT * FROM user WHERE id='${id}'`;
+        try{
+            connection.query(q,(err,result)=>{
+                if(err) throw err;
+                let user=result[0];
+                if(formpass !=user.password){
+                    // console.log(formpass)
+                    res.send("wrong password");
+                }
+                else{
+                    let q2=`UPDATE user SET username='${newUsername}' WHERE id='${id}'`;
+                    connection.query(q2,(err,result)=>{
+                        if (err) throw err;
+                        res.redirect("/user")
+                        // res.send(result);
+                    })
+                }
+            })
+        } catch (err){
+            console.log(err);
+            res.send("some error in DB ",err)
+        }
+})
 const connection=mysql.createConnection({
     host: 'localhost',
     user: 'root',
